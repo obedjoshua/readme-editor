@@ -229,7 +229,45 @@ function buildSmoothLinePath(points, width, height, padX, padY) {
   return { line, area, coords };
 }
 
-export default function App() {
+export default 
+function buildScallopPath(cx, cy, rOuter, rInner, lobes = 12) {
+  const pts = [];
+  const steps = lobes * 4;
+  for (let i = 0; i <= steps; i++) {
+    const a = (i / steps) * Math.PI * 2;
+    const r = rInner + ((rOuter - rInner) * (0.5 + 0.5 * Math.cos(lobes * a)));
+    const x = (cx + r * Math.cos(a)).toFixed(2);
+    const y = (cy + r * Math.sin(a)).toFixed(2);
+    pts.push((i === 0 ? "M" : "L") + x + "," + y);
+  }
+  return pts.join(" ") + " Z";
+}
+
+function buildSquigglyWave(xStart, xEnd, yMid, amp = 3.2, freq = 0.24) {
+  if (xEnd <= xStart) return "";
+  let d = `M ${xStart.toFixed(1)} ${yMid.toFixed(1)}`;
+  for (let x = xStart + 2; x <= xEnd; x += 2) {
+    const y = yMid + Math.sin((x - xStart) * freq) * amp;
+    d += ` L ${x.toFixed(1)} ${y.toFixed(1)}`;
+  }
+  return d;
+}
+
+function derivePaletteFromSeed(seedStr) {
+  let hash = 0;
+  for (let i = 0; i < seedStr.length; i++) {
+    hash = seedStr.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  return {
+    accent: `hsl(${hue}, 78%, 76%)`,
+    accentDim: `hsl(${hue}, 55%, 24%)`,
+    surface: `hsl(${hue}, 28%, 11%)`,
+    onAccent: `hsl(${hue}, 45%, 14%)`,
+  };
+}
+
+function App() {
   const [nowClock, setNowClock] = useState(() => new Date());
   useEffect(() => {
     const timer = setInterval(() => setNowClock(new Date()), 30000);
@@ -319,6 +357,83 @@ export default function App() {
   const [musicLiked, setMusicLiked] = useState(false);
   const [isFetchingMusic, setIsFetchingMusic] = useState(false);
   const [musicFetchError, setMusicFetchError] = useState('');
+  const [musicPalette, setMusicPalette] = useState({
+    accent: "#f2b8b5",
+    accentDim: "#5c2b29",
+    surface: "#1a1314",
+    onAccent: "#3b1514",
+  });
+  const [copiedPyToast, setCopiedPyToast] = useState(false);
+
+  useEffect(() => {
+    const fallback = derivePaletteFromSeed(musicTrack + musicArtist + musicCoverUrl);
+    if (!musicCoverUrl) {
+      setMusicPalette(fallback);
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = 24;
+        canvas.height = 24;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, 24, 24);
+        const data = ctx.getImageData(0, 0, 24, 24).data;
+        let r = 0, g = 0, b = 0, count = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+          if (lum > 35 && lum < 235) {
+            r += data[i];
+            g += data[i + 1];
+            b += data[i + 2];
+            count++;
+          }
+        }
+        if (count > 0) {
+          r = Math.round(r / count);
+          g = Math.round(g / count);
+          b = Math.round(b / count);
+          const rn = r / 255, gn = g / 255, bn = b / 255;
+          const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+          let h = 0;
+          if (max !== min) {
+            const d = max - min;
+            if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
+            else if (max === gn) h = ((bn - rn) / d + 2) / 6;
+            else h = ((rn - gn) / d + 4) / 6;
+          }
+          const hue = Math.round(h * 360);
+          setMusicPalette({
+            accent: `hsl(${hue}, 82%, 78%)`,
+            accentDim: `hsl(${hue}, 52%, 22%)`,
+            surface: `hsl(${hue}, 26%, 10%)`,
+            onAccent: `hsl(${hue}, 48%, 14%)`,
+          });
+        } else {
+          setMusicPalette(fallback);
+        }
+      } catch (_) {
+        setMusicPalette(fallback);
+      }
+    };
+    img.onerror = () => setMusicPalette(fallback);
+    img.src = musicCoverUrl;
+  }, [musicCoverUrl, musicTrack, musicArtist]);
+
+  const handleUploadCoverImage = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setMusicCoverUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
 
   // Tech Stack & Code Editor State
   const [selectedLangs, setSelectedLangs] = useState(['python', 'rust', 'ts', 'cpp', 'bash']);
@@ -905,6 +1020,8 @@ MUTED = "${theme.muted}"
 os.makedirs("dist", exist_ok=True)
 
 def fetch_b64_image(url):
+    if url.startswith("data:image/"):
+        return url
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "README-Studio"})
         with urllib.request.urlopen(req, timeout=10) as res:
@@ -988,26 +1105,109 @@ hero_svg = f"""<svg width="820" height="310" viewBox="0 0 820 310" fill="none" x
 with open("dist/hero-card.svg", "w", encoding="utf-8") as f:
     f.write(hero_svg)
 
-# 2. Slim Horizontal Mini-Player Card (dist/now-playing.svg)
+# 2. Caelestia Adaptive Media Player SVG (dist/now-playing.svg)
 cover_data_uri = fetch_b64_image("${musicCoverUrl}")
-cover_tag = f'<image href="{cover_data_uri}" x="12" y="10" width="46" height="46" preserveAspectRatio="xMidYMid slice" clip-path="url(#thumbClip)" />' if cover_data_uri else '<rect x="12" y="10" width="46" height="46" rx="10" fill="#3a2844" />'
+M_ACCENT = "${musicPalette.accent}"
+M_ACCENT_DIM = "${musicPalette.accentDim}"
+M_SURFACE = "${musicPalette.surface}"
+M_ON_ACCENT = "${musicPalette.onAccent}"
+SCALLOP_D = "${buildScallopPath(96, 108, 66, 59, 12)}"
+WAVE_ACTIVE_D = "${buildSquigglyWave(244, 244 + Math.round((musicProgress / 100) * 230), 108, 3.2, 0.25)}"
+WAVE_X_END = ${244 + Math.round((musicProgress / 100) * 230)}
 
-player_svg = f"""<svg width="460" height="68" viewBox="0 0 460 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+cover_tag = f'<image href="{cover_data_uri}" x="28" y="40" width="136" height="136" preserveAspectRatio="xMidYMid slice" clip-path="url(#caelestiaScallop)" />' if cover_data_uri else f'<rect x="28" y="40" width="136" height="136" fill="{M_ACCENT_DIM}" clip-path="url(#caelestiaScallop)" />'
+
+player_svg = f"""<svg width="640" height="216" viewBox="0 0 640 216" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <clipPath id="thumbClip"><rect x="12" y="10" width="46" height="46" rx="10" /></clipPath>
+    <clipPath id="caelestiaScallop">
+      <path d="{SCALLOP_D}">
+        <animateTransform attributeName="transform" type="rotate" from="0 96 108" to="360 96 108" dur="22s" repeatCount="indefinite" />
+      </path>
+    </clipPath>
+    <radialGradient id="caelestiaGlow1" cx="18%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="{M_ACCENT}" stop-opacity="0.28">
+        <animate attributeName="stop-opacity" values="0.22;0.34;0.22" dur="6s" repeatCount="indefinite" />
+      </stop>
+      <stop offset="100%" stop-color="{M_SURFACE}" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="caelestiaGlow2" cx="84%" cy="30%" r="50%">
+      <stop offset="0%" stop-color="{M_ACCENT}" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="{M_SURFACE}" stop-opacity="0" />
+    </radialGradient>
   </defs>
-  <rect x="0.5" y="0.5" width="459" height="67" rx="16" fill="{PLAYER_BG}" stroke="#ffffff" stroke-opacity="0.08" />
+
+  <rect x="0.5" y="0.5" width="639" height="215" rx="28" fill="{M_SURFACE}" stroke="{M_ACCENT}" stroke-opacity="0.22" />
+  <rect x="1" y="1" width="638" height="214" rx="28" fill="url(#caelestiaGlow1)" />
+  <rect x="1" y="1" width="638" height="214" rx="28" fill="url(#caelestiaGlow2)" />
+
+  <!-- Morphing Rotating Scalloped Album Frame -->
+  <path d="{SCALLOP_D}" fill="{M_ACCENT}" fill-opacity="0.18">
+    <animateTransform attributeName="transform" type="rotate" from="360 96 108" to="0 96 108" dur="18s" repeatCount="indefinite" />
+  </path>
   {cover_tag}
-  <text x="70" y="30" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="13" fill="#F5F3F7">${musicTrack.replace(/"/g, '&quot;')}</text>
-  <text x="70" y="47" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="500" font-size="11.5" fill="#B8B0C2">${musicArtist.replace(/"/g, '&quot;')}</text>
-  <rect x="336" y="25" width="11" height="17" rx="2" stroke="#D0C9D8" stroke-width="1.5" />
-  <circle cx="341.5" cy="36" r="2" stroke="#D0C9D8" stroke-width="1.4" />
-  <path d="M332 28h-3v11h3" stroke="#D0C9D8" stroke-width="1.5" stroke-linecap="round" />
-  <path d="M380 41.5l-5.6-5.2a3.8 3.8 0 0 1 5.4-5.4l.2.2.2-.2a3.8 3.8 0 0 1 5.4 5.4L380 41.5z" stroke="#E2DCE8" stroke-width="1.6" stroke-linejoin="round" />
-  <rect x="421" y="25" width="3.2" height="16" rx="1" fill="#F5F3F7" />
-  <rect x="428" y="25" width="3.2" height="16" rx="1" fill="#F5F3F7" />
-  <rect x="12" y="61" width="436" height="2.5" rx="1.25" fill="#FFFFFF" fill-opacity="0.16" />
-  <rect x="12" y="61" width="${progressWidth}" height="2.5" rx="1.25" fill="#F5F3F7" />
+
+  <!-- Track Metadata -->
+  <text x="196" y="48" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="18" fill="#F6F2F4">${musicTrack.slice(0, 34).replace(/"/g, "&quot;")}</text>
+  <text x="196" y="70" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="500" font-size="13" fill="#C9BFC2">${musicArtist.slice(0, 38).replace(/"/g, "&quot;")}</text>
+  <text x="196" y="88" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="400" font-size="11.5" fill="#9A8F93">Caelestia Live Audio</text>
+
+  <!-- Live Equalizer Sound Bar -->
+  <g transform="translate(556, 36)">
+    <rect x="0" y="10" width="3.5" height="14" rx="1.75" fill="{M_ACCENT}">
+      <animate attributeName="height" values="6;20;9;18;6" dur="1.1s" repeatCount="indefinite" />
+      <animate attributeName="y" values="18;4;15;6;18" dur="1.1s" repeatCount="indefinite" />
+    </rect>
+    <rect x="7" y="4" width="3.5" height="20" rx="1.75" fill="{M_ACCENT}">
+      <animate attributeName="height" values="18;7;22;10;18" dur="0.9s" repeatCount="indefinite" />
+      <animate attributeName="y" values="6;17;2;14;6" dur="0.9s" repeatCount="indefinite" />
+    </rect>
+    <rect x="14" y="8" width="3.5" height="16" rx="1.75" fill="{M_ACCENT}">
+      <animate attributeName="height" values="10;21;8;19;10" dur="1.25s" repeatCount="indefinite" />
+      <animate attributeName="y" values="14;3;16;5;14" dur="1.25s" repeatCount="indefinite" />
+    </rect>
+    <rect x="21" y="12" width="3.5" height="12" rx="1.75" fill="{M_ACCENT}">
+      <animate attributeName="height" values="16;6;19;8;16" dur="1.0s" repeatCount="indefinite" />
+      <animate attributeName="y" values="8;18;5;16;8" dur="1.0s" repeatCount="indefinite" />
+    </rect>
+    <rect x="28" y="6" width="3.5" height="18" rx="1.75" fill="{M_ACCENT}">
+      <animate attributeName="height" values="8;19;11;22;8" dur="1.15s" repeatCount="indefinite" />
+      <animate attributeName="y" values="16;5;13;2;16" dur="1.15s" repeatCount="indefinite" />
+    </rect>
+  </g>
+
+  <!-- Material 3 Squiggly Progress Wave + Timestamps -->
+  <text x="196" y="112" font-family="'JetBrains Mono', monospace" font-size="11" fill="#C9BFC2">2:27</text>
+  <line x1="{WAVE_X_END}" y1="108" x2="474" y2="108" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="3" stroke-linecap="round" />
+  <path d="{WAVE_ACTIVE_D}" stroke="{M_ACCENT}" stroke-width="3" stroke-linecap="round" fill="none" />
+  <rect x="{WAVE_X_END - 2}" y="99" width="4" height="18" rx="2" fill="{M_ACCENT}" />
+  <text x="486" y="112" font-family="'JetBrains Mono', monospace" font-size="11" fill="#C9BFC2">3:26</text>
+
+  <!-- Transport Controls -->
+  <g transform="translate(196, 130)">
+    <circle cx="15" cy="18" r="15" fill="#FFFFFF" fill-opacity="0.06" />
+    <path d="M10 14h3l4 8h3M20 14h-3l-1.5 3M10 22h3l1.5-3" stroke="#C9BFC2" stroke-width="1.5" stroke-linecap="round" />
+
+    <circle cx="54" cy="18" r="16" fill="#FFFFFF" fill-opacity="0.08" />
+    <path d="M58 13l-6 5 6 5V13zM50 13v10" stroke="#F6F2F4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+
+    <rect x="80" y="0" width="76" height="36" rx="18" fill="{M_ACCENT}" />
+    <rect x="112" y="11" width="3.8" height="14" rx="1.5" fill="{M_ON_ACCENT}" />
+    <rect x="120" y="11" width="3.8" height="14" rx="1.5" fill="{M_ON_ACCENT}" />
+
+    <circle cx="182" cy="18" r="16" fill="#FFFFFF" fill-opacity="0.08" />
+    <path d="M178 13l6 5-6 5V13zM186 13v10" stroke="#F6F2F4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+
+    <circle cx="221" cy="18" r="15" fill="#FFFFFF" fill-opacity="0.06" />
+    <path d="M216 16h9l-2-2M226 20h-9l2 2" stroke="#C9BFC2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- Volume Slider Bar -->
+  <g transform="translate(196, 180)">
+    <path d="M2 5h3l4-3v10l-4-3H2V5z" fill="#C9BFC2" />
+    <rect x="18" y="5.5" width="210" height="4" rx="2" fill="#FFFFFF" fill-opacity="0.14" />
+    <rect x="18" y="5.5" width="72" height="4" rx="2" fill="{M_ACCENT}" />
+    <rect x="88" y="1.5" width="4" height="12" rx="2" fill="{M_ACCENT}" />
+  </g>
 </svg>"""
 
 with open("dist/now-playing.svg", "w", encoding="utf-8") as f:
@@ -1116,7 +1316,7 @@ with open("dist/top-repos.svg", "w", encoding="utf-8") as f:
 
 print("Generated dist/hero-card.svg, dist/now-playing.svg, and dist/commit-line.svg successfully.")
 `;
-  }, [username, theme, profileTelemetry, selectedLangs, tagline, greeting, bioParagraph1, bioParagraph2, musicCoverUrl, musicTrack, musicArtist, musicProgress]);
+  }, [username, theme, profileTelemetry, selectedLangs, tagline, greeting, bioParagraph1, bioParagraph2, musicCoverUrl, musicTrack, musicArtist, musicProgress, musicPalette]);
 
   const generatedWorkflow = `name: Update Custom Profile SVGs
 
@@ -1662,8 +1862,17 @@ jobs:
                   />
                 </div>
                 <div>
+                  <label className="block text-[10px] text-[#9e99aa] mb-1 ml-1">Upload Custom Cover Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleUploadCoverImage}
+                    className="w-full text-[11px] text-[#d4cfe0] file:mr-2.5 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-[11px] file:font-semibold file:bg-[#c8bfff]/20 file:text-[#c8bfff] hover:file:bg-[#c8bfff]/30"
+                  />
+                </div>
+                <div>
                   <label className="block text-[10px] text-[#9e99aa] mb-1 ml-1">
-                    Bottom Scrubber Position ({musicProgress}%)
+                    Squiggly Scrubber Position ({musicProgress}%)
                   </label>
                   <input
                     type="range"
@@ -1674,6 +1883,17 @@ jobs:
                     className="w-full accent-[#c8bfff]"
                   />
                 </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(generatedPythonScript);
+                    setCopiedPyToast(true);
+                    setTimeout(() => setCopiedPyToast(false), 2500);
+                  }}
+                  className="w-full py-2 px-3 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f2eff7] text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all"
+                >
+                  {copiedPyToast ? "Copied generate_svgs.py!" : "Copy generate_svgs.py for Live Profile"}
+                </button>
               </div>
             </div>
           )}
