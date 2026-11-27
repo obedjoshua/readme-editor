@@ -228,8 +228,6 @@ function buildSmoothLinePath(points, width, height, padX, padY) {
   const area = `${line} L ${coords[coords.length - 1].x} ${bottomY} L ${coords[0].x} ${bottomY} Z`;
   return { line, area, coords };
 }
-
-export default 
 function buildScallopPath(cx, cy, rOuter, rInner, lobes = 12) {
   const nCx = Number(cx) || 96;
   const nCy = Number(cy) || 96;
@@ -272,7 +270,7 @@ function derivePaletteFromSeed(seedStr) {
   };
 }
 
-function App() {
+export default function App() {
   const [nowClock, setNowClock] = useState(() => new Date());
   useEffect(() => {
     const timer = setInterval(() => setNowClock(new Date()), 30000);
