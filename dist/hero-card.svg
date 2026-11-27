@@ -27,7 +27,7 @@
 
   <rect x="40" y="259" width="212" height="22" rx="8" fill="#27242e" />
   <text x="48" y="273" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="10" fill="#9e99aa">Repos / Followers</text>
-  <text x="244" y="273" text-anchor="end" font-family="monospace" font-weight="700" font-size="10" fill="#f2eff7">13 / 2</text>
+  <text x="244" y="273" text-anchor="end" font-family="monospace" font-weight="700" font-size="10" fill="#f2eff7">14 / 2</text>
 
   <text x="302" y="54" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="10.5" letter-spacing="2" fill="#9e99aa">ABOUT ME • README</text>
   <text x="302" y="92" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="25" fill="#f2eff7">Software, systems, and curious builds.</text>
