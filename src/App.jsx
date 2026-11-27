@@ -1063,6 +1063,57 @@ line_svg = f"""<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" fill="none" x
 with open("dist/commit-line.svg", "w", encoding="utf-8") as f:
     f.write(line_svg)
 
+# 4. Top Repositories Table SVG (dist/top-repos.svg)
+repos_req = urllib.request.Request(
+    f"https://api.github.com/users/{USERNAME}/repos?per_page=100&type=owner&sort=updated",
+    headers={"User-Agent": "README-Studio-Generator"}
+)
+with urllib.request.urlopen(repos_req) as res:
+    raw_repos = json.loads(res.read().decode())
+
+filtered_repos = [
+    r for r in (raw_repos if isinstance(raw_repos, list) else [])
+    if not r.get("fork") and r.get("name", "").lower() != USERNAME.lower()
+]
+filtered_repos.sort(key=lambda r: (r.get("stargazers_count", 0), r.get("pushed_at", "")), reverse=True)
+top_repos = filtered_repos[:5]
+
+row_h = 46
+header_h = 44
+total_h = header_h + max(1, len(top_repos)) * row_h
+rows_svg = []
+
+for idx, repo in enumerate(top_repos):
+    y = header_h + idx * row_h
+    r_name = (repo.get("name") or "")[:28].replace("&", "&amp;").replace("<", "&lt;")
+    r_desc = (repo.get("description") or "No description provided.")[:56].replace("&", "&amp;").replace("<", "&lt;")
+    if len(repo.get("description") or "") > 56:
+        r_desc += "..."
+    r_lang = (repo.get("language") or "Markdown").replace("&", "&amp;")
+    r_stars = repo.get("stargazers_count", 0)
+    line_el = f'<line x1="0" y1="{y}" x2="820" y2="{y}" stroke="{BORDER}" />'
+    rows_svg.append(f"""  {line_el}
+  <text x="20" y="{y + 28}" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="13" fill="#58a6ff">{r_name}</text>
+  <text x="215" y="{y + 28}" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="12.5" fill="{MUTED}">{r_desc}</text>
+  <text x="655" y="{y + 28}" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="12.5" fill="{TEXT}">{r_lang}</text>
+  <text x="768" y="{y + 28}" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="12.5" fill="{TEXT}">★ {r_stars}</text>""")
+
+repos_svg = f"""<svg width="820" height="{total_h}" viewBox="0 0 820 {total_h}" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0.5" y="0.5" width="819" height="{total_h - 1}" rx="12" fill="{BG}" stroke="{BORDER}" />
+  <text x="20" y="27" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="12.5" fill="{TEXT}">Repository</text>
+  <text x="215" y="27" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="12.5" fill="{TEXT}">Description</text>
+  <text x="655" y="27" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="12.5" fill="{TEXT}">Stack</text>
+  <text x="768" y="27" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="12.5" fill="{TEXT}">Stars</text>
+  <line x1="200" y1="0" x2="200" y2="{total_h}" stroke="{BORDER}" />
+  <line x1="600" y1="0" x2="600" y2="{total_h}" stroke="{BORDER}" />
+  <line x1="712" y1="0" x2="712" y2="{total_h}" stroke="{BORDER}" />
+{chr(10).join(rows_svg)}
+</svg>"""
+
+with open("dist/top-repos.svg", "w", encoding="utf-8") as f:
+    f.write(repos_svg)
+
+
 print("Generated dist/hero-card.svg, dist/now-playing.svg, and dist/commit-line.svg successfully.")
 `;
   }, [username, theme, profileTelemetry, selectedLangs, tagline, greeting, bioParagraph1, bioParagraph2, musicCoverUrl, musicTrack, musicArtist, musicProgress]);
