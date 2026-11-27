@@ -1886,7 +1886,7 @@ jobs:
                 <button
                   type="button"
                   onClick={() => {
-                    navigator.clipboard.writeText(generatedPythonScript);
+                    navigator.clipboard.writeText(generatedReadme);
                     setCopiedPyToast(true);
                     setTimeout(() => setCopiedPyToast(false), 2500);
                   }}
