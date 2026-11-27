@@ -1,43 +1,183 @@
-# 1. Dump your clipboard straight into generate_svgs.py
-if type -q wl-paste
-    wl-paste > generate_svgs.py
-else if type -q xclip
-    xclip -o -selection clipboard > generate_svgs.py
-else if type -q xsel
-    xsel --clipboard --output > generate_svgs.py
-else
-    echo "Clipboard CLI not found — open generate_svgs.py in Zed and press Ctrl+V"
-end
+import os
+import json
+import base64
+import datetime
+import urllib.request
 
-# 2. Verify the Python file starts with "import os"
-head -n 3 generate_svgs.py
+USERNAME = os.getenv("GITHUB_ACTOR", "obedjoshua")
+TOKEN = os.getenv("GITHUB_TOKEN", "")
+BG = "#0d1117"
+CARD = "#1d1b22"
+CARD_HIGH = "#27242e"
+BORDER = "#30363d"
+ACCENT = "#c8bfff"
+ON_ACCENT = "#251e4a"
+PLAYER_BG = "#2c1d33"
+TEXT = "#f2eff7"
+MUTED = "#9e99aa"
 
-# 3. Create the GitHub Action workflow and push both files
-printf '%s\n' "name: Update Custom Profile SVGs
+os.makedirs("dist", exist_ok=True)
 
-on:
-  schedule:
-    - cron: '0 */6 * * *'
-  workflow_dispatch:
-  push:
-    branches: [main]
+def gh_get_json(url, default):
+    headers = {
+        "User-Agent": "README-Studio-Generator",
+        "Accept": "application/vnd.github+json",
+    }
+    if TOKEN:
+        headers["Authorization"] = f"Bearer {TOKEN}"
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=12) as res:
+            return json.loads(res.read().decode())
+    except Exception as e:
+        print(f"Warning: {url} failed ({e}), using fallback.")
+        return default
 
-permissions:
-  contents: write
+def fetch_b64_image(url):
+    if not url:
+        return ""
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "README-Studio"})
+        with urllib.request.urlopen(req, timeout=10) as res:
+            mime = res.headers.get_content_type() or "image/jpeg"
+            b64 = base64.b64encode(res.read()).decode("utf-8")
+            return f"data:{mime};base64,{b64}"
+    except Exception:
+        return ""
 
-jobs:
-  render-svgs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Generate Profile SVGs
-        run: python generate_svgs.py
-      - name: Commit & Push SVGs
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add dist/
-          git diff --quiet && git diff --staged --quiet || (git commit -m 'chore: refresh profile SVGs' && git push)" > .github/workflows/update-readme.yml && git add generate_svgs.py .github/workflows/update-readme.yml && git commit -m "feat: add automated SVG generator" && git push
+user_data = gh_get_json(f"https://api.github.com/users/{USERNAME}", {})
+events = gh_get_json(f"https://api.github.com/users/{USERNAME}/events/public?per_page=100", [])
+
+avatar_url = user_data.get("avatar_url") or f"https://github.com/{USERNAME}.png"
+avatar_uri = fetch_b64_image(avatar_url)
+avatar_tag = f'<image href="{avatar_uri}" x="108" y="24" width="76" height="76" preserveAspectRatio="xMidYMid slice" clip-path="url(#avatarClip)" />' if avatar_uri else '<circle cx="146" cy="62" r="38" fill="#2b2836" />'
+
+is_online = isinstance(events, list) and len(events) > 0
+status_dot = "#34d399" if is_online else "#94a3b8"
+status_label = "Online • Recently Active" if is_online else "Offline • Idle"
+location_label = (user_data.get("location") or "Angeles, Philippines").replace("&", "&amp;")
+repos_count = user_data.get("public_repos", 24)
+followers_count = user_data.get("followers", 48)
+
+hero_svg = f"""<svg width="820" height="310" viewBox="0 0 820 310" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="avatarClip"><circle cx="146" cy="62" r="38" /></clipPath>
+    <radialGradient id="ambientGlow" cx="72%" cy="25%" r="55%">
+      <stop offset="0%" stop-color="{ACCENT}" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="{BG}" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="0.5" y="0.5" width="819" height="309" rx="28" fill="{BG}" stroke="{BORDER}" />
+  <rect x="1" y="1" width="818" height="308" rx="28" fill="url(#ambientGlow)" />
+
+  <rect x="24" y="20" width="244" height="270" rx="24" fill="{CARD}" stroke="#ffffff" stroke-opacity="0.07" />
+  {avatar_tag}
+  <circle cx="146" cy="62" r="38" stroke="#ffffff" stroke-opacity="0.15" stroke-width="1.5" />
+  <text x="146" y="122" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="18" fill="{TEXT}">{USERNAME}</text>
+  <text x="146" y="141" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="500" font-size="11" fill="{MUTED}">BSIT Student &amp; Full-Stack Developer</text>
+  <rect x="68" y="166" width="46" height="20" rx="10" fill="{CARD_HIGH}" /><text x="91" y="179" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="9.5" fill="{MUTED}">PYTHON</text>
+  <rect x="122" y="166" width="46" height="20" rx="10" fill="{CARD_HIGH}" /><text x="145" y="179" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="9.5" fill="{MUTED}">RUST</text>
+  <rect x="176" y="166" width="46" height="20" rx="10" fill="{CARD_HIGH}" /><text x="199" y="179" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="9.5" fill="{MUTED}">TS</text>
+
+  <line x1="42" y1="198" x2="250" y2="198" stroke="#ffffff" stroke-opacity="0.07" />
+  <circle cx="48" cy="216" r="4" fill="{status_dot}" />
+  <text x="58" y="220" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="11" fill="{TEXT}">{status_label}</text>
+
+  <rect x="40" y="232" width="212" height="22" rx="8" fill="{CARD_HIGH}" />
+  <text x="48" y="246" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="10" fill="{MUTED}">{location_label}</text>
+
+  <rect x="40" y="259" width="212" height="22" rx="8" fill="{CARD_HIGH}" />
+  <text x="48" y="273" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="10" fill="{MUTED}">Repos / Followers</text>
+  <text x="244" y="273" text-anchor="end" font-family="monospace" font-weight="700" font-size="10" fill="{TEXT}">{repos_count} / {followers_count}</text>
+
+  <text x="302" y="54" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="10.5" letter-spacing="2" fill="{MUTED}">ABOUT ME • README</text>
+  <text x="302" y="92" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="25" fill="{TEXT}">Software, systems, and curious builds.</text>
+  <text x="302" y="132" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#d4cfe0">I bridge the gap between clean architecture and practical tooling—building</text>
+  <text x="302" y="152" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#d4cfe0">full-stack web apps, AI platforms, and resilient backend services.</text>
+  <text x="302" y="186" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="12" fill="{MUTED}">Currently focused on distributed systems and open-source utilities.</text>
+
+  <rect x="302" y="226" width="136" height="34" rx="17" fill="{ACCENT}" />
+  <text x="370" y="247" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="11.5" fill="{ON_ACCENT}">View Repositories</text>
+
+  <rect x="448" y="226" width="132" height="34" rx="17" fill="{CARD_HIGH}" stroke="#ffffff" stroke-opacity="0.1" />
+  <text x="514" y="247" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="11.5" fill="{TEXT}">Follow @{USERNAME}</text>
+</svg>"""
+
+with open("dist/hero-card.svg", "w", encoding="utf-8") as f:
+    f.write(hero_svg)
+
+cover_data_uri = fetch_b64_image("https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80")
+cover_tag = f'<image href="{cover_data_uri}" x="12" y="10" width="46" height="46" preserveAspectRatio="xMidYMid slice" clip-path="url(#thumbClip)" />' if cover_data_uri else '<rect x="12" y="10" width="46" height="46" rx="10" fill="#3a2844" />'
+
+player_svg = f"""<svg width="460" height="68" viewBox="0 0 460 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="thumbClip"><rect x="12" y="10" width="46" height="46" rx="10" /></clipPath>
+  </defs>
+  <rect x="0.5" y="0.5" width="459" height="67" rx="16" fill="{PLAYER_BG}" stroke="#ffffff" stroke-opacity="0.08" />
+  {cover_tag}
+  <text x="70" y="30" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="13" fill="#F5F3F7">No More Push-Backs</text>
+  <text x="70" y="47" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="500" font-size="11.5" fill="#B8B0C2">Lauer</text>
+  <rect x="336" y="25" width="11" height="17" rx="2" stroke="#D0C9D8" stroke-width="1.5" />
+  <circle cx="341.5" cy="36" r="2" stroke="#D0C9D8" stroke-width="1.4" />
+  <path d="M332 28h-3v11h3" stroke="#D0C9D8" stroke-width="1.5" stroke-linecap="round" />
+  <path d="M380 41.5l-5.6-5.2a3.8 3.8 0 0 1 5.4-5.4l.2.2.2-.2a3.8 3.8 0 0 1 5.4 5.4L380 41.5z" stroke="#E2DCE8" stroke-width="1.6" stroke-linejoin="round" />
+  <rect x="421" y="25" width="3.2" height="16" rx="1" fill="#F5F3F7" />
+  <rect x="428" y="25" width="3.2" height="16" rx="1" fill="#F5F3F7" />
+  <rect x="12" y="61" width="436" height="2.5" rx="1.25" fill="#FFFFFF" fill-opacity="0.16" />
+  <rect x="12" y="61" width="122" height="2.5" rx="1.25" fill="#F5F3F7" />
+</svg>"""
+
+with open("dist/now-playing.svg", "w", encoding="utf-8") as f:
+    f.write(player_svg)
+
+today = datetime.date.today()
+days = [(today - datetime.timedelta(days=i)).isoformat() for i in range(29, -1, -1)]
+counts = {d: 0 for d in days}
+
+if isinstance(events, list):
+    for ev in events:
+        d_key = (ev.get("created_at") or "")[:10]
+        if d_key in counts:
+            c = len(ev.get("payload", {}).get("commits", [])) if ev.get("type") == "PushEvent" else 1
+            counts[d_key] += max(1, c)
+
+series = [counts[d] for d in days]
+max_val = max(series + [5])
+w, h, px, py = 680, 190, 28, 46
+inner_w = w - px * 2
+inner_h = h - py - 24
+
+coords = []
+for idx, val in enumerate(series):
+    x = round(px + (idx / (len(series) - 1)) * inner_w, 1)
+    y = round(py + inner_h - (val / max_val) * inner_h, 1)
+    coords.append((x, y))
+
+line_d = f"M {coords[0][0]} {coords[0][1]}"
+for i in range(len(coords) - 1):
+    x0, y0 = coords[i]
+    x1, y1 = coords[i + 1]
+    cx = round((x0 + x1) / 2, 1)
+    line_d += f" C {cx} {y0}, {cx} {y1}, {x1} {y1}"
+
+area_d = f"{line_d} L {coords[-1][0]} {py + inner_h} L {coords[0][0]} {py + inner_h} Z"
+dots = chr(10).join([f'<circle cx="{x}" cy="{y}" r="3" fill="{ACCENT}" />' for x, y in coords[::3]])
+
+line_svg = f"""<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="{ACCENT}" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="{ACCENT}" stop-opacity="0.0"/>
+    </linearGradient>
+  </defs>
+  <rect x="0.5" y="0.5" width="{w-1}" height="{h-1}" rx="24" fill="{CARD}" stroke="{BORDER}" />
+  <text x="28" y="30" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="14" fill="{TEXT}">{USERNAME} // 30-Day Commit Activity ({sum(series)} contributions)</text>
+  <path d="{area_d}" fill="url(#areaGrad)" />
+  <path d="{line_d}" stroke="{ACCENT}" stroke-width="2.6" stroke-linecap="round" fill="none" />
+  {dots}
+</svg>"""
+
+with open("dist/commit-line.svg", "w", encoding="utf-8") as f:
+    f.write(line_svg)
+
+print("Generated dist/hero-card.svg, dist/now-playing.svg, and dist/commit-line.svg successfully.")

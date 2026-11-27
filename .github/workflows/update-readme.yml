@@ -19,6 +19,8 @@ jobs:
         with:
           python-version: '3.12'
       - name: Generate Profile SVGs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python generate_svgs.py
       - name: Commit & Push SVGs
         run: |
