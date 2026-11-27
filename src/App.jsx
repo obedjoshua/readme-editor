@@ -654,27 +654,67 @@ export default function App() {
       const host = parsed.hostname.toLowerCase();
 
       if (host.includes('spotify.com')) {
-        const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(rawUrl)}`;
-        const res = await fetch(oembedUrl);
-        if (!res.ok) throw new Error('Could not fetch Spotify track info. Make sure it is a public track link.');
-        const data = await res.json();
+        const cleanSpotifyUrl = `${parsed.origin}${parsed.pathname}`;
+        let data = null;
+
+        try {
+          const res = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(cleanSpotifyUrl)}`);
+          if (res.ok) data = await res.json();
+        } catch (_) {}
+
+        if (!data) {
+          const fallbackRes = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(cleanSpotifyUrl)}`);
+          if (fallbackRes.ok) data = await fallbackRes.json();
+        }
+
+        if (!data || data.error) throw new Error('Could not fetch Spotify track info. Make sure it is a public track link.');
 
         setMusicPlatform('spotify');
         setMusicTrack(data.title || 'Spotify Track');
         setMusicArtist(data.author_name || 'Spotify');
         if (data.thumbnail_url) setMusicCoverUrl(data.thumbnail_url);
-        setMusicLink(rawUrl);
+        setMusicLink(cleanSpotifyUrl);
       } else if (host.includes('youtube.com') || host.includes('youtu.be')) {
-        const normalizedUrl = rawUrl.replace('music.youtube.com', 'www.youtube.com');
-        const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(normalizedUrl)}&format=json`;
-        const res = await fetch(oembedUrl);
-        if (!res.ok) throw new Error('Could not fetch YouTube Music track info. Check that the video is public.');
-        const data = await res.json();
+        const idMatch = rawUrl.match(new RegExp("(?:v=|youtu\.be/|embed/|shorts/)([a-zA-Z0-9_-]{11})"));
+        const videoId = idMatch ? idMatch[1] : null;
+        const cleanYtUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : rawUrl.replace('music.youtube.com', 'www.youtube.com');
+
+        let title = '';
+        let artist = '';
+        let cover = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : '';
+
+        // 1. CORS-friendly noembed
+        try {
+          const res = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(cleanYtUrl)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (!data.error && data.title) {
+              title = data.title;
+              artist = (data.author_name || 'YouTube Music').replace(/s*-s*Topic$/i, '');
+              if (data.thumbnail_url) cover = data.thumbnail_url;
+            }
+          }
+        } catch (_) {}
+
+        // 2. Fallback to Microlink OpenGraph scraper
+        if (!title) {
+          const mlRes = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(cleanYtUrl)}`);
+          if (mlRes.ok) {
+            const mlJson = await mlRes.json();
+            if (mlJson.status === 'success' && mlJson.data) {
+              title = (mlJson.data.title || '').replace(/s*-s*YouTube$/i, '');
+              artist = (mlJson.data.author || mlJson.data.publisher || 'YouTube Music').replace(/s*-s*Topic$/i, '');
+              if (mlJson.data.image?.url) cover = mlJson.data.image.url;
+            }
+          }
+        }
+
+        if (!title) throw new Error('Could not fetch YouTube Music track info. Check that the video is public.');
 
         setMusicPlatform('ytmusic');
-        setMusicTrack(data.title || 'YouTube Music Track');
-        setMusicArtist((data.author_name || 'YouTube Music').replace(/\s*-\s*Topic$/i, ''));
-        if (data.thumbnail_url) setMusicCoverUrl(data.thumbnail_url);
+        setMusicTrack(title);
+        setMusicArtist(artist || 'YouTube Music');
+        if (cover) setMusicCoverUrl(cover);
         setMusicLink(rawUrl);
       } else {
         throw new Error('Paste a valid open.spotify.com or music.youtube.com / youtu.be link.');
