@@ -231,13 +231,18 @@ function buildSmoothLinePath(points, width, height, padX, padY) {
 
 export default 
 function buildScallopPath(cx, cy, rOuter, rInner, lobes = 12) {
+  const nCx = Number(cx) || 96;
+  const nCy = Number(cy) || 96;
+  const nOut = Number(rOuter) || 86;
+  const nIn = Number(rInner) || 77;
+  const nLobes = Number(lobes) || 12;
   const pts = [];
-  const steps = lobes * 4;
+  const steps = nLobes * 4;
   for (let i = 0; i <= steps; i++) {
     const a = (i / steps) * Math.PI * 2;
-    const r = rInner + ((rOuter - rInner) * (0.5 + 0.5 * Math.cos(lobes * a)));
-    const x = (cx + r * Math.cos(a)).toFixed(2);
-    const y = (cy + r * Math.sin(a)).toFixed(2);
+    const r = nIn + ((nOut - nIn) * (0.5 + 0.5 * Math.cos(nLobes * a)));
+    const x = (nCx + r * Math.cos(a)).toFixed(2);
+    const y = (nCy + r * Math.sin(a)).toFixed(2);
     pts.push((i === 0 ? "M" : "L") + x + "," + y);
   }
   return pts.join(" ") + " Z";
