@@ -472,28 +472,6 @@ export default function App() {
   // Compact Mini Player State
   const [musicUrlInput, setMusicUrlInput] = useState('https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT');
   const [musicPlatform, setMusicPlatform] = useState('spotify');
-  // Persist custom track & cover art across reloads
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("readme_studio_v1") || "null");
-      if (saved) {
-        if (saved.musicTrack) setMusicTrack(saved.musicTrack);
-        if (saved.musicArtist) setMusicArtist(saved.musicArtist);
-        if (saved.musicCoverUrl) setMusicCoverUrl(saved.musicCoverUrl);
-        if (saved.greeting) setGreeting(saved.greeting);
-        if (saved.tagline) setTagline(saved.tagline);
-        if (saved.bioParagraph1) setBioParagraph1(saved.bioParagraph1);
-        if (saved.bioParagraph2) setBioParagraph2(saved.bioParagraph2);
-      }
-    } catch {}
-  }, []);
-  useEffect(() => {
-    try {
-      localStorage.setItem("readme_studio_v1", JSON.stringify({
-        musicTrack, musicArtist, musicCoverUrl, greeting, tagline, bioParagraph1, bioParagraph2
-      }));
-    } catch {}
-  }, [musicTrack, musicArtist, musicCoverUrl, greeting, tagline, bioParagraph1, bioParagraph2]);
 
   const [musicTrack, setMusicTrack] = useState('No More Push-Backs');
   const [musicArtist, setMusicArtist] = useState('Lauer');
