@@ -184,7 +184,7 @@ function getTechIconUrl(id, name = "") {
   const aliasMap = { qml: "qt", assembly: "wasm", asm: "wasm", fsharp: "cs", objc: "apple" };
   const mapped = aliasMap[cleanId] || cleanId;
   if (SKILLICON_SUPPORTED.has(mapped)) {
-    return getTechIconUrl(mapped);
+    return `https://skillicons.dev/icons?i=${mapped}`;
   }
   const label = encodeURIComponent((name || cleanId).slice(0, 12));
   return `https://img.shields.io/badge/${label}-1e2230?style=for-the-badge&logoColor=c8bfff`;
