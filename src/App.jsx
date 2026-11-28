@@ -43,38 +43,152 @@ import {
 } from 'lucide-react';
 
 // --- CATALOG DATA ---
+const SKILLICON_SUPPORTED = new Set([
+  "ableton","activitypub","actix","adonis","ae","aiscript","alpinejs","anaconda","androidstudio","angular","ansible","apollo","apple","appwrite","arch","arduino","astro","atom","au","autocad","aws","azul","azure","babel","bash","bevy","bitbucket","blender","bootstrap","bsd","bun","c","cassandra","clion","clojure","cloudflare","cmake","codepen","coffeescript","cpp","crystal","cs","css","cypress","d3","dart","debian","deno","devto","discord","discordjs","django","docker","dotnet","dynamodb","eclipse","elasticsearch","electron","elixir","elysia","emacs","ember","emotion","express","fastapi","fediverse","figma","firebase","flask","flutter","forth","fortran","gamemakerstudio","gatsby","gcp","git","github","githubactions","gitlab","gmail","godot","go","gradle","grafana","graphql","gtk","gulp","haskell","haxe","haxeflixel","heroku","hibernate","html","htmx","idea","ai","immutablejs","instagram","ipfs","java","js","jenkins","jest","jquery","julia","kafka","kali","kotlin","ktor","kubernetes","laravel","latex","less","linkedin","linux","lit","lua","markdown","mastodon","materialui","matlab","maven","mint","misskey","mongodb","mysql","neovim","nestjs","netlify","nextjs","nginx","nim","nix","nodejs","notion","npm","nuxtjs","obsidian","ocaml","octave","opencv","openshift","openstack","p5js","perl","php","phpstorm","pinia","pkl","plan9","planetscale","pnpm","postgres","postman","powershell","pr","prisma","processing","prometheus","ps","pug","pycharm","python","pytorch","qt","r","rabbitmq","rails","raspberrypi","react","reactivex","redhat","redis","redux","regex","remix","replit","rider","robloxstudio","rocket","rollupjs","ros","ruby","rust","sass","scala","sklearn","selenium","sentry","sequelize","sketchup","solidity","solidjs","spring","sqlite","stackoverflow","styledcomponents","sublime","supabase","svelte","svg","swift","symfony","tailwind","tauri","tensorflow","terraform","threejs","ts","twitter","ubuntu","unity","unreal","v","vala","vercel","vim","visualstudio","vite","vitest","vscode","vscodium","vue","vuetify","vulkan","wasm","webflow","webpack","webstorm","windicss","windows","wordpress","workers","xd","yarn","yew","zig"
+]);
+
 const TECH_CATALOG = {
   languages: [
-    { id: 'python', name: 'Python', color: '#3776AB' },
-    { id: 'rust', name: 'Rust', color: '#DEA584' },
-    { id: 'ts', name: 'TypeScript', color: '#3178C6' },
-    { id: 'js', name: 'JavaScript', color: '#F7DF1E' },
-    { id: 'cpp', name: 'C++', color: '#00599C' },
-    { id: 'go', name: 'Go', color: '#00ADD8' },
-    { id: 'java', name: 'Java', color: '#ED8B00' },
-    { id: 'bash', name: 'Bash', color: '#4EAA25' },
-    { id: 'sql', name: 'SQL', color: '#E38C00' },
+    { id: "html", name: "HTML5" },
+    { id: "css", name: "CSS3" },
+    { id: "js", name: "JavaScript" },
+    { id: "ts", name: "TypeScript" },
+    { id: "qml", name: "QML" },
+    { id: "python", name: "Python" },
+    { id: "c", name: "C" },
+    { id: "cpp", name: "C++" },
+    { id: "cs", name: "C#" },
+    { id: "java", name: "Java" },
+    { id: "rust", name: "Rust" },
+    { id: "go", name: "Go" },
+    { id: "kotlin", name: "Kotlin" },
+    { id: "swift", name: "Swift" },
+    { id: "dart", name: "Dart" },
+    { id: "php", name: "PHP" },
+    { id: "ruby", name: "Ruby" },
+    { id: "bash", name: "Bash / Shell" },
+    { id: "powershell", name: "PowerShell" },
+    { id: "postgres", name: "SQL (PostgreSQL)" },
+    { id: "mysql", name: "MySQL" },
+    { id: "sqlite", name: "SQLite" },
+    { id: "graphql", name: "GraphQL" },
+    { id: "lua", name: "Lua" },
+    { id: "r", name: "R" },
+    { id: "scala", name: "Scala" },
+    { id: "elixir", name: "Elixir" },
+    { id: "haskell", name: "Haskell" },
+    { id: "zig", name: "Zig" },
+    { id: "perl", name: "Perl" },
+    { id: "solidity", name: "Solidity" },
+    { id: "matlab", name: "MATLAB" },
+    { id: "octave", name: "Octave" },
+    { id: "julia", name: "Julia" },
+    { id: "clojure", name: "Clojure" },
+    { id: "ocaml", name: "OCaml" },
+    { id: "nim", name: "Nim" },
+    { id: "crystal", name: "Crystal" },
+    { id: "fortran", name: "Fortran" },
+    { id: "forth", name: "Forth" },
+    { id: "coffeescript", name: "CoffeeScript" },
+    { id: "haxe", name: "Haxe" },
+    { id: "vala", name: "Vala" },
+    { id: "v", name: "V" },
+    { id: "nix", name: "Nix" },
+    { id: "wasm", name: "WebAssembly" },
+    { id: "glsl", name: "GLSL" },
+    { id: "hlsl", name: "HLSL" },
+    { id: "latex", name: "LaTeX" },
+    { id: "markdown", name: "Markdown" },
+    { id: "sass", name: "Sass / SCSS" },
+    { id: "less", name: "Less" },
+    { id: "regex", name: "RegEx" },
+    { id: "asm", name: "Assembly" },
+    { id: "mojo", name: "Mojo" },
+    { id: "gleam", name: "Gleam" },
+    { id: "erlang", name: "Erlang" },
+    { id: "fsharp", name: "F#" },
+    { id: "objc", name: "Objective-C" },
+    { id: "groovy", name: "Groovy" },
+    { id: "yaml", name: "YAML" },
+    { id: "json", name: "JSON" },
+    { id: "toml", name: "TOML" },
+    { id: "xml", name: "XML" },
   ],
   frameworks: [
-    { id: 'react', name: 'React', color: '#61DAFB' },
-    { id: 'nextjs', name: 'Next.js', color: '#FFFFFF' },
-    { id: 'tailwind', name: 'Tailwind CSS', color: '#06B6D4' },
-    { id: 'nodejs', name: 'Node.js', color: '#339933' },
-    { id: 'fastapi', name: 'FastAPI', color: '#009688' },
-    { id: 'pytorch', name: 'PyTorch', color: '#EE4C2C' },
-    { id: 'tauri', name: 'Tauri', color: '#FFC131' },
+    { id: "react", name: "React" },
+    { id: "nextjs", name: "Next.js" },
+    { id: "vue", name: "Vue.js" },
+    { id: "nuxtjs", name: "Nuxt" },
+    { id: "angular", name: "Angular" },
+    { id: "svelte", name: "Svelte" },
+    { id: "solidjs", name: "SolidJS" },
+    { id: "astro", name: "Astro" },
+    { id: "remix", name: "Remix" },
+    { id: "qt", name: "Qt / Kirigami" },
+    { id: "tailwind", name: "Tailwind CSS" },
+    { id: "bootstrap", name: "Bootstrap" },
+    { id: "materialui", name: "Material UI" },
+    { id: "nodejs", name: "Node.js" },
+    { id: "express", name: "Express" },
+    { id: "nestjs", name: "NestJS" },
+    { id: "elysia", name: "Elysia" },
+    { id: "fastapi", name: "FastAPI" },
+    { id: "django", name: "Django" },
+    { id: "flask", name: "Flask" },
+    { id: "spring", name: "Spring" },
+    { id: "laravel", name: "Laravel" },
+    { id: "symfony", name: "Symfony" },
+    { id: "rails", name: "Ruby on Rails" },
+    { id: "dotnet", name: ".NET" },
+    { id: "flutter", name: "Flutter" },
+    { id: "electron", name: "Electron" },
+    { id: "tauri", name: "Tauri" },
+    { id: "vite", name: "Vite" },
+    { id: "prisma", name: "Prisma" },
+    { id: "pytorch", name: "PyTorch" },
+    { id: "tensorflow", name: "TensorFlow" },
+    { id: "redux", name: "Redux" },
+    { id: "htmx", name: "htmx" },
+    { id: "alpinejs", name: "Alpine.js" },
+    { id: "threejs", name: "Three.js" },
+    { id: "gtk", name: "GTK" },
   ],
   tools: [
-    { id: 'docker', name: 'Docker', color: '#2496ED' },
-    { id: 'kubernetes', name: 'K8s', color: '#326CE5' },
-    { id: 'linux', name: 'Linux', color: '#FCC624' },
-    { id: 'arch', name: 'Arch', color: '#1793D1' },
-    { id: 'git', name: 'Git', color: '#F05032' },
-    { id: 'cloudflare', name: 'Cloudflare', color: '#F38020' },
-    { id: 'postgres', name: 'PostgreSQL', color: '#4169E1' },
-    { id: 'nix', name: 'NixOS', color: '#5277C3' },
+    { id: "docker", name: "Docker" },
+    { id: "kubernetes", name: "Kubernetes" },
+    { id: "arch", name: "Arch Linux" },
+    { id: "linux", name: "Linux" },
+    { id: "git", name: "Git" },
+    { id: "github", name: "GitHub" },
+    { id: "githubactions", name: "GitHub Actions" },
+    { id: "cloudflare", name: "Cloudflare" },
+    { id: "aws", name: "AWS" },
+    { id: "gcp", name: "Google Cloud" },
+    { id: "azure", name: "Azure" },
+    { id: "firebase", name: "Firebase" },
+    { id: "supabase", name: "Supabase" },
+    { id: "mongodb", name: "MongoDB" },
+    { id: "redis", name: "Redis" },
+    { id: "nginx", name: "Nginx" },
+    { id: "figma", name: "Figma" },
+    { id: "vercel", name: "Vercel" },
+    { id: "neovim", name: "Neovim" },
+    { id: "vscode", name: "VS Code" },
+    { id: "cmake", name: "CMake" },
+    { id: "terraform", name: "Terraform" },
   ],
 };
+
+function getTechIconUrl(id, name = "") {
+  const cleanId = String(id).toLowerCase().trim();
+  const aliasMap = { qml: "qt", assembly: "wasm", asm: "wasm", fsharp: "cs", objc: "apple" };
+  const mapped = aliasMap[cleanId] || cleanId;
+  if (SKILLICON_SUPPORTED.has(mapped)) {
+    return getTechIconUrl(mapped);
+  }
+  const label = encodeURIComponent((name || cleanId).slice(0, 12));
+  return `https://img.shields.io/badge/${label}-1e2230?style=for-the-badge&logoColor=c8bfff`;
+}
 
 const EDITORS = [
   { id: 'neovim', name: 'Neovim', badgeColor: '57A143', detail: 'LazyVim + Lua + LSP' },
@@ -291,6 +405,14 @@ export default function App() {
 
   // Profile & Human Copy
   const [username, setUsername] = useState('obedjoshua');
+  // Auto-sync greeting with username
+  useEffect(() => {
+    setGreeting((prev) =>
+      /^Hi, I'm [^s—]+ — crafting resilient software & interfaces.$/.test(prev)
+        ? `Hi, I'm ${username || "developer"} — crafting resilient software & interfaces.`
+        : prev
+    );
+  }, [username]);
   const [repoName, setRepoName] = useState('readme-editor');
   const [githubProfileUrlInput, setGithubProfileUrlInput] = useState('https://github.com/obedjoshua');
   const [githubToken, setGithubToken] = useState('');
@@ -319,7 +441,7 @@ export default function App() {
   });
 
   const [themeKey, setThemeKey] = useState('lavenderNoir');
-  const [greeting, setGreeting] = useState("Software, systems, and curious builds.");
+  const [greeting, setGreeting] = useState("Hi, I'm obedjoshua — crafting resilient software & interfaces.");
   const [tagline, setTagline] = useState('BSIT Student & Full-Stack Systems Developer');
   const [bioParagraph1, setBioParagraph1] = useState(
     'I bridge the gap between clean architecture and practical tooling—building full-stack web apps, AI-driven platforms, and resilient backend services.'
@@ -910,7 +1032,7 @@ export default function App() {
             const cells = chunk
               .map(
                 (t) =>
-                  `    <td align="center" width="110">\n      <img src="https://skillicons.dev/icons?i=${t.id}" width="42" height="42" alt="${t.name}" /><br><sub><b>${t.name}</b></sub>\n    </td>`
+                  `    <td align="center" width="110">\n      <img src="${getTechIconUrl(t.id, t.name)}" width="42" height="42" alt="${t.name}" /><br><sub><b>${t.name}</b></sub>\n    </td>`
               )
               .join('\n');
             rows.push(`  <tr>\n${cells}\n  </tr>`);
@@ -1737,7 +1859,7 @@ jobs:
                             <Check className="w-3 h-3 text-[#c8bfff]" />
                           ) : (
                             <img
-                              src={`https://skillicons.dev/icons?i=${item.id}`}
+                              src={getTechIconUrl(item.id)}
                               alt={item.name}
                               className="w-3.5 h-3.5 rounded-full"
                             />
@@ -2238,7 +2360,7 @@ jobs:
                                           className="border border-[#30363d] px-5 py-3 text-center w-[116px] bg-[#0d1117]"
                                         >
                                           <img
-                                            src={`https://skillicons.dev/icons?i=${tech.id}`}
+                                            src={getTechIconUrl(tech.id)}
                                             alt={tech.name}
                                             className="w-10 h-10 mx-auto mb-1.5"
                                           />
@@ -2258,7 +2380,7 @@ jobs:
                                   className="px-3 py-1 rounded bg-[#1d1b22] border border-[#30363d] text-xs font-semibold text-white flex items-center gap-1.5"
                                 >
                                   <img
-                                    src={`https://skillicons.dev/icons?i=${tech.id}`}
+                                    src={getTechIconUrl(tech.id)}
                                     alt={tech.name}
                                     className="w-3.5 h-3.5"
                                   />
