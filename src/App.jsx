@@ -1026,7 +1026,7 @@ export default function App() {
 
   // --- GENERATORS FOR EXPORT (USING SVG CARDS SO GITHUB RENDERS THE EXACT STYLIZED LAYOUT) ---
   const generatedReadme = useMemo(() => {
-    const rawBase = `https://raw.githubusercontent.com/${username}/${repoName}/main/dist`;
+    const rawBase = `https://raw.githubusercontent.com/${username}/${repoName}/svg-assets`;
     const allSelectedTech = [
       ...TECH_CATALOG.languages.filter((i) => selectedLangs.includes(i.id)),
       ...TECH_CATALOG.frameworks.filter((i) => selectedFrameworks.includes(i.id)),
@@ -1080,7 +1080,7 @@ export default function App() {
         const recentList = profileTelemetry.latestContris
           .map((c) => `- **${c.repo}** — ${c.detail} _(${c.when})_`)
           .join('\n');
-        return `### 📈 Commit Velocity & Latest Contributions\n\n<p align="center">\n  <img src="${rawBase}/commit-line.svg" alt="30-Day Commit Line Graph" />\n</p>\n\n${recentList}`;
+        return `### 📈 Commit Velocity & Latest Contributions\n\n<p align="center">\n  <img src="${rawBase}/commit-line.svg?v=${Date.now().toString(36)}" alt="30-Day Commit Line Graph" />\n</p>\n\n${recentList}`;
       })(),
       badges: (() => {
         if (badges.length === 0) return '';
