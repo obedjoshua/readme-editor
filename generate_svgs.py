@@ -5,6 +5,7 @@ import json
 import base64
 import datetime
 import urllib.request
+import urllib.parse
 
 USERNAME = os.getenv("GITHUB_ACTOR", "obedjoshua")
 TOKEN = os.getenv("GITHUB_TOKEN", "")
@@ -105,7 +106,53 @@ def load_readme_studio_config(user):
             print(f"Note: {url} -> {e}")
     return {}
 
+
+def fetch_lastfm_now_playing():
+    api_key = os.environ.get("LASTFM_API_KEY", "").strip()
+    lfm_user = os.environ.get("LASTFM_USER", "").strip()
+    if not api_key or not lfm_user:
+        return {}
+    url = (
+        f"https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks"
+        f"&user={urllib.parse.quote(lfm_user)}&api_key={urllib.parse.quote(api_key)}&format=json&limit=1"
+    )
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "README-Studio-LastFM"})
+        with urllib.request.urlopen(req, timeout=10) as res:
+            data = json.loads(res.read().decode("utf-8", errors="ignore"))
+        tracks = data.get("recenttracks", {}).get("track", [])
+        if isinstance(tracks, dict):
+            tracks = [tracks]
+        if not tracks:
+            return {}
+        t = tracks[0]
+        title = (t.get("name") or "").strip()
+        artist_obj = t.get("artist") or {}
+        artist = (artist_obj.get("#text") if isinstance(artist_obj, dict) else str(artist_obj)).strip()
+        images = t.get("image") or []
+        cover = ""
+        for img in reversed(images):
+            if img.get("#text"):
+                cover = img["#text"].strip()
+                break
+        is_now = str((t.get("@attr") or {}).get("nowplaying", "")).lower() == "true"
+        print(f"LAST.FM TRACK -> title={title!r}, artist={artist!r}, nowplaying={is_now}, cover={bool(cover)}")
+        out = {}
+        if title:
+            out["musicTrack"] = title
+        if artist:
+            out["musicArtist"] = artist
+        if cover:
+            out["musicCoverUrl"] = cover
+        out["musicIsPlaying"] = is_now
+        return out
+    except Exception as e:
+        print(f"Last.fm fetch warning: {e}")
+        return {}
+
 cfg = load_readme_studio_config(USERNAME)
+lfm_cfg = fetch_lastfm_now_playing()
+cfg.update(lfm_cfg)
 ACTIVE_USER = cfg.get("username") or USERNAME
 theme_key = cfg.get("theme") if cfg.get("theme") in THEMES else "lavenderNoir"
 t = THEMES[theme_key]
