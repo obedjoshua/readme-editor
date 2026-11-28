@@ -150,7 +150,16 @@ for idx, label in enumerate(pill_langs):
     px_txt = px_box + 23
     pills_svg += f'<rect x="{px_box}" y="166" width="46" height="20" rx="10" fill="{CARD_HIGH}" /><text x="{px_txt}" y="179" text-anchor="middle" font-family="\x27Google Sans\x27, \x27Segoe UI\x27, Roboto, sans-serif" font-weight="700" font-size="9.5" fill="{MUTED}">{xml_esc(label)}</text>' + chr(10) + "  "
 
-greeting_font_size = 21 if len(greeting) > 36 else 25
+g_words = greeting.split()
+g_l1, g_l2 = [], []
+for gw in g_words:
+    if len(" ".join(g_l1 + [gw])) <= 36 and not g_l2:
+        g_l1.append(gw)
+    else:
+        g_l2.append(gw)
+greeting_l1 = xml_esc(" ".join(g_l1))
+greeting_l2 = xml_esc(" ".join(g_l2))
+greeting_font_size = 22 if greeting_l2 else 25
 
 hero_svg = f"""<svg width="820" height="310" viewBox="0 0 820 310" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -181,10 +190,11 @@ hero_svg = f"""<svg width="820" height="310" viewBox="0 0 820 310" fill="none" x
   <text x="244" y="273" text-anchor="end" font-family="monospace" font-weight="700" font-size="10" fill="{TEXT}">{repos_count} / {followers_count}</text>
 
   <text x="302" y="54" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="10.5" letter-spacing="2" fill="{MUTED}">ABOUT ME • README</text>
-  <text x="302" y="92" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="{greeting_font_size}" fill="{TEXT}">{xml_esc(greeting)}</text>
-  <text x="302" y="132" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#d4cfe0">{bio1_l1}</text>
-  <text x="302" y="152" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#d4cfe0">{bio1_l2}</text>
-  <text x="302" y="186" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="12" fill="{MUTED}">{bio2}</text>
+  <text x="302" y="84" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="{greeting_font_size}" fill="{TEXT}">{greeting_l1}</text>
+  <text x="302" y="110" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="{greeting_font_size}" fill="{TEXT}">{greeting_l2}</text>
+  <text x="302" y="{140 if greeting_l2 else 128}" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#d4cfe0">{bio1_l1}</text>
+  <text x="302" y="{158 if greeting_l2 else 148}" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#d4cfe0">{bio1_l2}</text>
+  <text x="302" y="{190 if greeting_l2 else 182}" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="12" fill="{MUTED}">{bio2}</text>
 
   <rect x="302" y="226" width="136" height="34" rx="17" fill="{ACCENT}" />
   <text x="370" y="247" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="11.5" fill="{ON_ACCENT}">View Repositories</text>

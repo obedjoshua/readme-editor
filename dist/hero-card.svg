@@ -19,8 +19,8 @@
   <rect x="176" y="166" width="46" height="20" rx="10" fill="#27242e" /><text x="199" y="179" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="9.5" fill="#9e99aa">TS</text>
   
   <line x1="42" y1="198" x2="250" y2="198" stroke="#ffffff" stroke-opacity="0.07" />
-  <circle cx="48" cy="216" r="4" fill="#34d399" />
-  <text x="58" y="220" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="11" fill="#f2eff7">Online • Recently Active</text>
+  <circle cx="48" cy="216" r="4" fill="#94a3b8" />
+  <text x="58" y="220" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="11" fill="#f2eff7">Offline • Idle</text>
 
   <rect x="40" y="232" width="212" height="22" rx="8" fill="#27242e" />
   <text x="48" y="246" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="10" fill="#9e99aa">Angeles, Philippines</text>
@@ -30,10 +30,11 @@
   <text x="244" y="273" text-anchor="end" font-family="monospace" font-weight="700" font-size="10" fill="#f2eff7">14 / 2</text>
 
   <text x="302" y="54" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="10.5" letter-spacing="2" fill="#9e99aa">ABOUT ME • README</text>
-  <text x="302" y="92" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="21" fill="#f2eff7">Hi, I'm obedjoshua — crafting resilient software &amp; interfaces.</text>
-  <text x="302" y="132" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#d4cfe0">I bridge the gap between clean architecture and practical tooling—building</text>
-  <text x="302" y="152" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#d4cfe0">full-stack web apps, AI platforms, and resilient backend services.</text>
-  <text x="302" y="186" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="12" fill="#9e99aa">Currently focused on distributed systems and open-source utilities.</text>
+  <text x="302" y="84" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="22" fill="#f2eff7">Hi, I'm obedjoshua — crafting</text>
+  <text x="302" y="110" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="22" fill="#f2eff7">resilient software &amp; interfaces.</text>
+  <text x="302" y="140" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#d4cfe0">I bridge the gap between clean architecture and practical tooling—building</text>
+  <text x="302" y="158" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#d4cfe0">full-stack web apps, AI platforms, and resilient backend services.</text>
+  <text x="302" y="190" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="12" fill="#9e99aa">Currently focused on distributed systems and open-source utilities.</text>
 
   <rect x="302" y="226" width="136" height="34" rx="17" fill="#c8bfff" />
   <text x="370" y="247" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="11.5" fill="#251e4a">View Repositories</text>
