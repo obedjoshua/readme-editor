@@ -2,7 +2,7 @@ name: Update Custom Profile SVGs
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
   push:
     branches: [main]
@@ -26,5 +26,5 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add dist/
-          git diff --quiet && git diff --staged --quiet || (git commit -m 'chore: refresh profile SVGs' && git push)
+          git add -f dist/hero-card.svg dist/now-playing.svg dist/commit-line.svg
+          git diff --quiet && git diff --staged --quiet || (git commit -m 'chore: sync profile SVGs from README' && git push)
