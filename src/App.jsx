@@ -1034,8 +1034,8 @@ export default function App() {
     ];
 
     const blocks = {
-      header: `<p align="center">\n  <a href="https://github.com/${username}">\n    <img src="${rawBase}/hero-card.svg" alt="${greeting}" />\n  </a>\n</p>`,
-      spotify: `<p align="center">\n  <a href="${musicLink}" target="_blank" rel="noopener noreferrer">\n    <img src="${rawBase}/now-playing.svg" alt="${musicTrack} - ${musicArtist}" />\n  </a>\n</p>`,
+      header: `<p align="center">\n  <a href="https://github.com/${username}">\n    <img src="https://raw.githubusercontent.com/${username}/readme-editor/svg-assets/hero-card.svg?v=${Date.now().toString(36)}" alt="${greeting}" />\n  </a>\n</p>`,
+      spotify: `<p align="center">\n  <a href="${musicLink}" target="_blank" rel="noopener noreferrer">\n    <img src="https://raw.githubusercontent.com/${username}/readme-editor/svg-assets/now-playing.svg?v=${Date.now().toString(36)}" alt="${musicTrack} - ${musicArtist}" />\n  </a>\n</p>`,
       stack: (() => {
         let out = `### 🛠️ Tools, Languages & Environment\n\n`;
         if (stackLayout === 'grid') {
