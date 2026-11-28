@@ -3,6 +3,8 @@ name: Update Custom Profile SVGs
 on:
   schedule:
     - cron: '*/5 * * * *'
+  repository_dispatch:
+    types: [sync-readme]
   workflow_dispatch:
   push:
     branches: [main]
@@ -22,9 +24,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python generate_svgs.py
-      - name: Commit & Push SVGs
+      - name: Publish SVGs to svg-assets branch
         run: |
+          cd svg_out
+          git init
+          git checkout -b svg-assets
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add -f dist/hero-card.svg dist/now-playing.svg dist/commit-line.svg
-          git diff --quiet && git diff --staged --quiet || (git commit -m 'chore: sync profile SVGs from README' && git push)
+          git add .
+          git commit -m 'chore: sync profile SVGs from README'
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" svg-assets

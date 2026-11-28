@@ -32,7 +32,7 @@ THEMES = {
     },
 }
 
-os.makedirs("dist", exist_ok=True)
+os.makedirs("svg_out", exist_ok=True)
 
 def xml_esc(s):
     return (
@@ -85,8 +85,9 @@ def load_readme_studio_config(user):
                 md = res.read().decode("utf-8", errors="ignore")
             m = re.search(r"<!--\s*STUDIO_CONFIG:(\{.*?\})\s*-->", md, re.DOTALL)
             if m:
-                print(f"Loaded STUDIO_CONFIG from {url}")
-                return json.loads(m.group(1))
+                parsed = json.loads(m.group(1))
+                print(f"Synced STUDIO_CONFIG from {url}: track={parsed.get('musicTrack')}")
+                return parsed
         except Exception as e:
             print(f"Note: {url} -> {e}")
     return {}
@@ -96,15 +97,9 @@ ACTIVE_USER = cfg.get("username") or USERNAME
 theme_key = cfg.get("theme") if cfg.get("theme") in THEMES else "lavenderNoir"
 t = THEMES[theme_key]
 
-BG = t["bg"]
-CARD = t["card"]
-CARD_HIGH = t["cardHigh"]
-BORDER = t["border"]
-ACCENT = t["accent"]
-ON_ACCENT = t["onAccent"]
-PLAYER_BG = t["playerBg"]
-TEXT = t["text"]
-MUTED = t["muted"]
+BG, CARD, CARD_HIGH, BORDER = t["bg"], t["card"], t["cardHigh"], t["border"]
+ACCENT, ON_ACCENT, PLAYER_BG = t["accent"], t["onAccent"], t["playerBg"]
+TEXT, MUTED = t["text"], t["muted"]
 
 user_data = gh_get_json(f"https://api.github.com/users/{ACTIVE_USER}", {})
 events = gh_get_json(f"https://api.github.com/users/{ACTIVE_USER}/events/public?per_page=100", [])
@@ -129,37 +124,41 @@ greeting = cfg.get("greeting") or f"Hi, I'm {ACTIVE_USER} — crafting resilient
 bio1 = cfg.get("bioParagraph1") or "I bridge the gap between clean architecture and practical tooling—building full-stack web apps, AI platforms, and resilient backend services."
 bio2 = xml_esc(cfg.get("bioParagraph2") or "Currently focused on distributed systems and open-source utilities.")
 
+# Wrap greeting cleanly across 2 lines (max 34 chars on line 1) so it NEVER clips on the right
+g_words = greeting.split()
+g_l1, g_l2 = [], []
+for gw in g_words:
+    if len(" ".join(g_l1 + [gw])) <= 34 and not g_l2:
+        g_l1.append(gw)
+    else:
+        g_l2.append(gw)
+greeting_l1 = xml_esc(" ".join(g_l1))
+greeting_l2 = xml_esc(" ".join(g_l2)[:42])
+greeting_font_size = 21 if greeting_l2 else 25
+
 words = bio1.split()
 line1_words, line2_words = [], []
 for w in words:
-    if len(" ".join(line1_words + [w])) <= 74 and not line2_words:
+    if len(" ".join(line1_words + [w])) <= 72 and not line2_words:
         line1_words.append(w)
     else:
         line2_words.append(w)
 bio1_l1 = xml_esc(" ".join(line1_words))
-bio1_l2 = xml_esc(" ".join(line2_words)[:82])
+bio1_l2 = xml_esc(" ".join(line2_words)[:80])
 
 raw_langs = cfg.get("selectedLangs") or ["python", "rust", "ts"]
 pill_langs = [str(x).upper()[:6] for x in raw_langs[:3]]
 while len(pill_langs) < 3:
     pill_langs.append("CODE")
 
-pills_svg = ""
-for idx, label in enumerate(pill_langs):
-    px_box = 68 + idx * 54
-    px_txt = px_box + 23
-    pills_svg += f'<rect x="{px_box}" y="166" width="46" height="20" rx="10" fill="{CARD_HIGH}" /><text x="{px_txt}" y="179" text-anchor="middle" font-family="\x27Google Sans\x27, \x27Segoe UI\x27, Roboto, sans-serif" font-weight="700" font-size="9.5" fill="{MUTED}">{xml_esc(label)}</text>' + chr(10) + "  "
+pills_svg = "".join([
+    f'<rect x="{68 + idx * 54}" y="166" width="46" height="20" rx="10" fill="{CARD_HIGH}" /><text x="{91 + idx * 54}" y="179" text-anchor="middle" font-family="\x27Google Sans\x27, \x27Segoe UI\x27, Roboto, sans-serif" font-weight="700" font-size="9.5" fill="{MUTED}">{xml_esc(label)}</text>'
+    for idx, label in enumerate(pill_langs)
+])
 
-g_words = greeting.split()
-g_l1, g_l2 = [], []
-for gw in g_words:
-    if len(" ".join(g_l1 + [gw])) <= 36 and not g_l2:
-        g_l1.append(gw)
-    else:
-        g_l2.append(gw)
-greeting_l1 = xml_esc(" ".join(g_l1))
-greeting_l2 = xml_esc(" ".join(g_l2))
-greeting_font_size = 22 if greeting_l2 else 25
+y_bio1 = 142 if greeting_l2 else 130
+y_bio2 = 160 if greeting_l2 else 150
+y_bio3 = 192 if greeting_l2 else 184
 
 hero_svg = f"""<svg width="820" height="310" viewBox="0 0 820 310" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -189,12 +188,12 @@ hero_svg = f"""<svg width="820" height="310" viewBox="0 0 820 310" fill="none" x
   <text x="48" y="273" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="10" fill="{MUTED}">Repos / Followers</text>
   <text x="244" y="273" text-anchor="end" font-family="monospace" font-weight="700" font-size="10" fill="{TEXT}">{repos_count} / {followers_count}</text>
 
-  <text x="302" y="54" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="10.5" letter-spacing="2" fill="{MUTED}">ABOUT ME • README</text>
+  <text x="302" y="52" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="10.5" letter-spacing="2" fill="{MUTED}">ABOUT ME • README</text>
   <text x="302" y="84" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="{greeting_font_size}" fill="{TEXT}">{greeting_l1}</text>
   <text x="302" y="110" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="{greeting_font_size}" fill="{TEXT}">{greeting_l2}</text>
-  <text x="302" y="{140 if greeting_l2 else 128}" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#d4cfe0">{bio1_l1}</text>
-  <text x="302" y="{158 if greeting_l2 else 148}" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#d4cfe0">{bio1_l2}</text>
-  <text x="302" y="{190 if greeting_l2 else 182}" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="12" fill="{MUTED}">{bio2}</text>
+  <text x="302" y="{y_bio1}" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#d4cfe0">{bio1_l1}</text>
+  <text x="302" y="{y_bio2}" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#d4cfe0">{bio1_l2}</text>
+  <text x="302" y="{y_bio3}" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="12" fill="{MUTED}">{bio2}</text>
 
   <rect x="302" y="226" width="136" height="34" rx="17" fill="{ACCENT}" />
   <text x="370" y="247" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="11.5" fill="{ON_ACCENT}">View Repositories</text>
@@ -203,7 +202,7 @@ hero_svg = f"""<svg width="820" height="310" viewBox="0 0 820 310" fill="none" x
   <text x="514" y="247" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="11.5" fill="{TEXT}">Follow @{xml_esc(ACTIVE_USER)}</text>
 </svg>"""
 
-with open("dist/hero-card.svg", "w", encoding="utf-8") as f:
+with open("svg_out/hero-card.svg", "w", encoding="utf-8") as f:
     f.write(hero_svg)
 
 music_track = xml_esc(cfg.get("musicTrack") or "No More Push-Backs")
@@ -240,7 +239,7 @@ player_svg = f"""<svg width="460" height="68" viewBox="0 0 460 68" fill="none" x
   <rect x="12" y="61" width="{progress_w}" height="2.5" rx="1.25" fill="{p_accent}" />
 </svg>"""
 
-with open("dist/now-playing.svg", "w", encoding="utf-8") as f:
+with open("svg_out/now-playing.svg", "w", encoding="utf-8") as f:
     f.write(player_svg)
 
 today = datetime.date.today()
@@ -290,7 +289,7 @@ line_svg = f"""<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" fill="none" x
   {dots}
 </svg>"""
 
-with open("dist/commit-line.svg", "w", encoding="utf-8") as f:
+with open("svg_out/commit-line.svg", "w", encoding="utf-8") as f:
     f.write(line_svg)
 
-print("Synced dist/hero-card.svg, dist/now-playing.svg, and dist/commit-line.svg with README.md!")
+print("Generated SVGs into svg_out/ successfully.")
