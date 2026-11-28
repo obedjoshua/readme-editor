@@ -1156,6 +1156,26 @@ MUTED = "${theme.muted}"
 
 os.makedirs("dist", exist_ok=True)
 
+
+import json, re
+
+def load_remote_studio_config(user):
+    try:
+        req = urllib.request.Request(
+            f"https://raw.githubusercontent.com/{user}/{user}/main/README.md",
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            md = resp.read().decode("utf-8", errors="ignore")
+        m = re.search(r"<!--s*STUDIO_CONFIG:({.*?})s*-->", md)
+        if m:
+            return json.loads(m.group(1))
+    except Exception as e:
+        print("Using fallback studio config:", e)
+    return {}
+
+REMOTE_CFG = load_remote_studio_config(USERNAME)
+
 def fetch_b64_image(url):
     if url.startswith("data:image/"):
         return url
@@ -1258,7 +1278,7 @@ with open("dist/hero-card.svg", "w", encoding="utf-8") as f:
     f.write(hero_svg)
 
 # 2. Caelestia Adaptive Media Player SVG (dist/now-playing.svg)
-cover_data_uri = fetch_b64_image(${JSON.stringify(musicCoverUrl)})
+cover_data_uri = fetch_b64_image(REMOTE_CFG.get("musicCoverUrl") or ${JSON.stringify(musicCoverUrl)})
 M_ACCENT = "${musicPalette.accent}"
 M_ACCENT_DIM = "${musicPalette.accentDim}"
 M_SURFACE = "${musicPalette.surface}"
