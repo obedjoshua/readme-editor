@@ -547,14 +547,26 @@ export default function App() {
     img.src = musicCoverUrl;
   }, [musicCoverUrl, musicTrack, musicArtist]);
 
-  const handleUploadCoverImage = (e) => {
+    const handleUploadCoverImage = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setMusicCoverUrl(reader.result);
-      }
+      if (typeof reader.result !== "string") return;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 240;
+        canvas.height = 240;
+        const ctx = canvas.getContext("2d");
+        const size = Math.min(img.width, img.height);
+        const sx = (img.width - size) / 2;
+        const sy = (img.height - size) / 2;
+        ctx.drawImage(img, sx, sy, size, size, 0, 0, 240, 240);
+        const compactDataUri = canvas.toDataURL("image/jpeg", 0.86);
+        setMusicCoverUrl(compactDataUri);
+      };
+      img.src = reader.result;
     };
     reader.readAsDataURL(file);
   };
@@ -1181,6 +1193,20 @@ location_label = (user_data.get("location") or "${profileTelemetry.location}").r
 repos_count = user_data.get("public_repos", ${profileTelemetry.publicRepos})
 followers_count = user_data.get("followers", ${profileTelemetry.followers})
 
+
+SELECTED_TECH = ${JSON.stringify([
+  ...TECH_CATALOG.languages.filter((i) => selectedLangs.includes(i.id)),
+  ...TECH_CATALOG.frameworks.filter((i) => selectedFrameworks.includes(i.id)),
+  ...TECH_CATALOG.tools.filter((i) => selectedTools.includes(i.id)),
+].slice(0, 6).map((t) => ({ id: t.id, name: t.name, icon: getTechIconUrl(t.id, t.name) })))}
+
+tech_badges_svg = ""
+for idx, item in enumerate(SELECTED_TECH):
+    bx = 302 + idx * 82
+    b64_icon = fetch_b64_image(item["icon"])
+    icon_el = f'<image href="{b64_icon}" x="{bx + 6}" y="196" width="16" height="16" />' if b64_icon else ""
+    tech_badges_svg += f'<rect x="{bx}" y="192" width="76" height="24" rx="8" fill="{CARD_HIGH}" stroke="#ffffff" stroke-opacity="0.08" />{icon_el}<text x="{bx + 26}" y="207" font-family="\x27Google Sans\x27, sans-serif" font-weight="600" font-size="10" fill="{TEXT}">{item["name"][:7]}</text>'
+
 # 1. Stylized 2-Column Hero Identity Card (dist/hero-card.svg)
 hero_svg = f"""<svg width="820" height="310" viewBox="0 0 820 310" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -1219,6 +1245,7 @@ hero_svg = f"""<svg width="820" height="310" viewBox="0 0 820 310" fill="none" x
   <text x="302" y="152" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" size="13" fill="#d4cfe0">${bioParagraph1.slice(68, 136).replace(/"/g, '&quot;')}</text>
   <text x="302" y="186" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-size="12" fill="{MUTED}">${bioParagraph2.slice(0, 74).replace(/"/g, '&quot;')}</text>
 
+  {tech_badges_svg}
   <!-- Pill CTAs -->
   <rect x="302" y="226" width="136" height="34" rx="17" fill="{ACCENT}" />
   <text x="370" y="247" text-anchor="middle" font-family="'Google Sans', 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="11.5" fill="{ON_ACCENT}">View Repositories</text>
@@ -1231,7 +1258,7 @@ with open("dist/hero-card.svg", "w", encoding="utf-8") as f:
     f.write(hero_svg)
 
 # 2. Caelestia Adaptive Media Player SVG (dist/now-playing.svg)
-cover_data_uri = fetch_b64_image("${musicCoverUrl}")
+cover_data_uri = fetch_b64_image(${JSON.stringify(musicCoverUrl)})
 M_ACCENT = "${musicPalette.accent}"
 M_ACCENT_DIM = "${musicPalette.accentDim}"
 M_SURFACE = "${musicPalette.surface}"
