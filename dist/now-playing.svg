@@ -9,9 +9,9 @@
   <rect x="336" y="25" width="11" height="17" rx="2" stroke="#D0C9D8" stroke-width="1.5" />
   <circle cx="341.5" cy="36" r="2" stroke="#D0C9D8" stroke-width="1.4" />
   <path d="M332 28h-3v11h3" stroke="#D0C9D8" stroke-width="1.5" stroke-linecap="round" />
-  <path d="M380 41.5l-5.6-5.2a3.8 3.8 0 0 1 5.4-5.4l.2.2.2-.2a3.8 3.8 0 0 1 5.4 5.4L380 41.5z" stroke="#E2DCE8" stroke-width="1.6" stroke-linejoin="round" />
+  <path d="M380 41.5l-5.6-5.2a3.8 3.8 0 0 1 5.4-5.4l.2.2.2-.2a3.8 3.8 0 0 1 5.4 5.4L380 41.5z" stroke="#F5F3F7" stroke-width="1.6" stroke-linejoin="round" />
   <rect x="421" y="25" width="3.2" height="16" rx="1" fill="#F5F3F7" />
   <rect x="428" y="25" width="3.2" height="16" rx="1" fill="#F5F3F7" />
   <rect x="12" y="61" width="436" height="2.5" rx="1.25" fill="#FFFFFF" fill-opacity="0.16" />
-  <rect x="12" y="61" width="122" height="2.5" rx="1.25" fill="#F5F3F7" />
+  <rect x="12" y="61" width="122.1" height="2.5" rx="1.25" fill="#F5F3F7" />
 </svg>
