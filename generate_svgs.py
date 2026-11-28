@@ -86,9 +86,8 @@ def load_readme_studio_config(user):
             if "<!-- STUDIO_CONFIG:" in md:
                 raw_json = md.split("<!-- STUDIO_CONFIG:", 1)[1].split("-->", 1)[0].strip()
                 parsed = json.loads(raw_json)
-                print(f"LOADED STUDIO_CONFIG from {url} -> track={parsed.get('musicTrack')!r}")
+                print(f"LOADED STUDIO_CONFIG -> track={parsed.get('musicTrack')!r}, artist={parsed.get('musicArtist')!r}")
                 return parsed
-            # Fallback: parse headline & track directly from <img alt="..."> in README.md
             fallback = {}
             hero_alt = re.search(r'hero-card.svg[^"]*"s+alt="([^"]+)"', md)
             if hero_alt:
@@ -100,7 +99,7 @@ def load_readme_studio_config(user):
                 if len(parts) > 1:
                     fallback["musicArtist"] = parts[1].strip()
             if fallback:
-                print(f"PARSED ALT FALLBACK from {url} -> {fallback}")
+                print(f"PARSED ALT FALLBACK -> {fallback}")
                 return fallback
         except Exception as e:
             print(f"Note: {url} -> {e}")
