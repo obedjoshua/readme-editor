@@ -83,11 +83,13 @@ def load_readme_studio_config(user):
             req = urllib.request.Request(url, headers={"User-Agent": "README-Studio-Sync", "Cache-Control": "no-cache"})
             with urllib.request.urlopen(req, timeout=10) as res:
                 md = res.read().decode("utf-8", errors="ignore")
-            m = re.search(r"<!--\s*STUDIO_CONFIG:(\{.*?\})\s*-->", md, re.DOTALL)
-            if m:
-                parsed = json.loads(m.group(1))
-                print(f"Synced STUDIO_CONFIG from {url}: track={parsed.get('musicTrack')}")
+            if "<!-- STUDIO_CONFIG:" in md:
+                raw_json = md.split("<!-- STUDIO_CONFIG:", 1)[1].split("-->", 1)[0].strip()
+                parsed = json.loads(raw_json)
+                print(f"LOADED FROM {url} -> track={parsed.get('musicTrack')!r}, artist={parsed.get('musicArtist')!r}")
                 return parsed
+            else:
+                print(f"WARNING: No STUDIO_CONFIG comment found in {url} (length={len(md)})")
         except Exception as e:
             print(f"Note: {url} -> {e}")
     return {}
